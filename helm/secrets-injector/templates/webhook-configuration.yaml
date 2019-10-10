@@ -1,0 +1,45 @@
+{{- $caPrefix := printf "%s-%s-ca" .Release.Name .Chart.Name }}
+{{- $ca := genCA $caPrefix 3650 }}
+{{- $cn := printf "%s-%s" .Release.Name .Chart.Name }}
+{{- $altName1 := printf "%s-%s.%s.svc" .Release.Name .Chart.Name .Values.namespace }}
+{{- $cert := genSignedCert $cn nil (list $altName1) 3650 $ca }}
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+webhooks:
+  - name: {{ .Release.Name }}-{{ .Chart.Name }}.expediagroup.com
+    clientConfig:
+      service:
+        name: {{ .Release.Name }}-{{ .Chart.Name }}
+        namespace: {{ .Release.Namespace }}
+        path: "/mutate"
+      caBundle: {{ b64enc $ca.Cert }}
+    failurePolicy:  Ignore
+    rules:
+      - operations: [ "CREATE" ]
+        apiGroups: ["apps", ""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+    namespaceSelector:
+      matchLabels:
+        {{ .Values.namespaceSelector }}: enabled
+
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}
+data:
+  cert.pem: {{ b64enc $cert.Cert }}
+  key.pem: {{ b64enc $cert.Key }}

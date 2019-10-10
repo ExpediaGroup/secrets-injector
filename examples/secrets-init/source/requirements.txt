@@ -1,0 +1,6 @@
+boto3
+jproperties
+pyyaml
+toml
+unflatten
+ec2-metadata

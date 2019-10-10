@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sleep
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sleep
+  template:
+    metadata:
+      annotations:
+        iam.amazonaws.com/role: arn:aws:iam::000000000000:role/my-secret-role
+      labels:
+        com.expediagroup/secrets-injector-format: yaml
+        com.expediagroup/secrets-injector-key: my-secret-key
+        app: sleep
+    spec:
+      containers:
+      - name: sleep
+        image: tutum/curl
+        command: ["/bin/sleep","infinity"]
+        imagePullPolicy: IfNotPresent

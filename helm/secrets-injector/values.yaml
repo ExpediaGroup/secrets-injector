@@ -1,0 +1,23 @@
+# Main secrets webhook image
+image:
+  name: secrets-injector
+  pullSecrets: {}
+  pullPolicy: IfNotPresent
+
+# Secretmanager image
+secretImage:
+  name: secret-init
+  command: python
+  arg: main.py
+  volume: /secrets
+
+replicas: 1
+
+namespaceSelector: com.expediagroup/secrets-injector
+targetPort: 443
+
+# Location of injector pod for cert DNS
+namespace: kube-system
+
+# Logging level verbosity
+verbosity: 4

@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sleep2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sleep2
+  template:
+    metadata:
+      labels:
+        app: sleep2
+    spec:
+      containers:
+      - name: sleep
+        image: tutum/curl
+        command: ["/bin/sleep","infinity"]
+        imagePullPolicy: IfNotPresent

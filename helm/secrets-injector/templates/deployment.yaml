@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  labels:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-{{ .Chart.Name }}
+    spec:
+      containers:
+        - name: secrets-injector
+          image: {{ .Values.image.name }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - -port={{ .Values.targetPort }}
+            - -tlsCertFile=/etc/webhook/certs/cert.pem
+            - -tlsKeyFile=/etc/webhook/certs/key.pem
+            - -image={{ .Values.secretImage.name }}
+            - -command={{ .Values.secretImage.command }}
+            - -arg={{ .Values.secretImage.arg }}
+            - -volume={{ .Values.secretImage.volume }}
+            - -alsologtostderr
+            - -v={{ .Values.verbosity }}
+            - 2>&1
+          volumeMounts:
+            - name: webhook-certs
+              mountPath: /etc/webhook/certs
+              readOnly: true
+      volumes:
+        - name: webhook-certs
+          secret:
+            secretName: {{ .Release.Name }}-{{ .Chart.Name }}
+{{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+        - name: {{.Values.image.pullSecrets }}
+{{- end }}
