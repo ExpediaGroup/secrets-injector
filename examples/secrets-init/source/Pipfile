@@ -6,9 +6,11 @@ verify_ssl = true
 [dev-packages]
 autopep8 = "*"
 cython = "*"
+pylint = "*"
 
 [packages]
 boto3 = "*"
+ec2-metadata = "*"
 pyyaml = "*"
 jproperties = "*"
 toml = "*"
