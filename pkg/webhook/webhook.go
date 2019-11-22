@@ -32,8 +32,8 @@ import (
 )
 
 const (
-	secretFormatLabel   = "com.expediagroup/secrets-injector-format"
-	secretKeyLabel      = "com.expediagroup/secrets-injector-key"
+	secretFormatLabel   = "expediagroup.com/secrets-injector-format"
+	secretKeyLabel      = "expediagroup.com/secrets-injector-key"
 	secretFormatDefault = "toml"
 )
 

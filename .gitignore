@@ -1,0 +1,7 @@
+/.idea
+*.iml
+.vscode
+.DS_Store
+
+secrets-injector
+Pipfile.lock
