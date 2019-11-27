@@ -13,7 +13,7 @@ secretImage:
 
 replicas: 1
 
-namespaceSelector: com.expediagroup/secrets-injector
+namespaceSelector: expediagroup.com/secrets-injector
 targetPort: 443
 
 # Location of injector pod for cert DNS

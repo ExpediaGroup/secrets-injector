@@ -46,14 +46,14 @@ Put any additional overrides in overrides.yaml in helm folder
 
 ### Decorate namespace with a label
 
-`kubectl label namespace default com.expediagroup/secrets-injector=enabled`
+`kubectl label namespace default expediagroup.com/secrets-injector=enabled`
 
 This is overridable in the helm chart if necessary `namespaceSelector: mylabel`
 
 ### Add pod labels
 
-`com.expediagroup/secrets-injector-format: yaml`
-`com.expediagroup/secrets-injector-key: my-secret-key`
+`expediagroup.com/secrets-injector-format: yaml`
+`expediagroup.com/secrets-injector-key: my-secret-key`
 
 ### Create IAM role/policies/trust
 
@@ -139,8 +139,8 @@ spec:
       annotations:
         iam.amazonaws.com/role: arn:aws:iam::000000000000:role/my-secret-role
       labels:
-        com.expediagroup/secrets-injector-format: yaml
-        com.expediagroup/secrets-injector-key: s-eg-platform
+        expediagroup.com/secrets-injector-format: yaml
+        expediagroup.com/secrets-injector-key: s-eg-platform
         app: sleep
     spec:
       containers:
