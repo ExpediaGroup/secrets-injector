@@ -269,7 +269,7 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 
 	var admissionResponse *arv1.AdmissionResponse
 	ar := arv1.AdmissionReview{}
-	if _, _, err := deserializer.Decode(body, nil, &ar); err != nil {
+	if _, gvk, err := deserializer.Decode(body, nil, &ar); err != nil {
 		glog.Errorf("Can't decode body: %v", err)
 		admissionResponse = &arv1.AdmissionResponse{
 			Result: &metav1.Status{
@@ -277,6 +277,7 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 			},
 		}
 	} else {
+		ar.SetGroupVersionKind(*gvk)
 		if r.URL.Path == "/mutate" {
 			admissionResponse = whsvr.mutate(&ar, whsvr.Parameters)
 		}
