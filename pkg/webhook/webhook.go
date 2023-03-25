@@ -287,6 +287,7 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 		admissionReview.Response = admissionResponse
 		if ar.Request != nil {
 			admissionReview.Response.UID = ar.Request.UID
+			admissionReview.SetGroupVersionKind(ar.GetObjectKind().GroupVersionKind())
 		}
 	}
 
