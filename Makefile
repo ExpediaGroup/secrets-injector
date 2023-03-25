@@ -7,7 +7,7 @@ docker-injector-build:
 docker-secret-build:
 	docker build -t $(SECRET_TAG) ./examples/secrets-init
 go-build:
-	docker run --rm -v $(shell pwd):/usr/src/secrets-injector --workdir /usr/src/secrets-injector -e CGO_ENABLED=0 -e GOPATH=/usr -e GOOS=linux -e GOARCH=amd64 -e GO111MODULE=on golang:1.12 go build -a -tags netgo -ldflags '-w' -o secrets-injector *.go
+	docker run --rm -v $(shell pwd):/usr/src/secrets-injector --workdir /usr/src/secrets-injector -e CGO_ENABLED=0 -e GOPATH=/usr -e GOOS=linux -e GOARCH=amd64 -e GO111MODULE=on golang:1.19-alpine go build -a -tags netgo -ldflags '-w' -o secrets-injector *.go
 docker-push: 
 	docker push $(INJECTOR_TAG) && docker push $(SECRET_TAG)
 helm-install:

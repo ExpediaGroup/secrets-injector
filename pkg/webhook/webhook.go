@@ -22,13 +22,12 @@ import (
 	"net/http"
 
 	"github.com/golang/glog"
-	"k8s.io/api/admission/v1beta1"
-	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
+	arv1 "k8s.io/api/admission/v1"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/kubernetes/pkg/apis/core/v1"
 )
 
 const (
@@ -70,10 +69,10 @@ type patchOperation struct {
 
 func init() {
 	_ = corev1.AddToScheme(runtimeScheme)
-	_ = admissionregistrationv1beta1.AddToScheme(runtimeScheme)
+	_ = admissionregistrationv1.AddToScheme(runtimeScheme)
 	// defaulting with webhooks:
 	// https://github.com/kubernetes/kubernetes/issues/57982
-	_ = v1.AddToScheme(runtimeScheme)
+	_ = arv1.AddToScheme(runtimeScheme)
 }
 
 // Create volume to mount the secret on
@@ -190,7 +189,7 @@ func createPatch(pod corev1.Pod, secretKey string, secretFormat string, paramete
 }
 
 // main mutation process
-func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, parameters WhSvrParameters) *v1beta1.AdmissionResponse {
+func (whsvr *WebhookServer) mutate(ar *arv1.AdmissionReview, parameters WhSvrParameters) *arv1.AdmissionResponse {
 	req := ar.Request
 
 	glog.V(3).Infof("AdmissionReview for Kind=%v, Namespace=%v, UID=%v patchOperation=%v, UserInfo=%v",
@@ -201,7 +200,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, parameters WhSvr
 	case "Pod":
 		if err := json.Unmarshal(req.Object.Raw, &pod); err != nil {
 			glog.Errorf("Could not unmarshal raw object: %v", err)
-			return &v1beta1.AdmissionResponse{
+			return &arv1.AdmissionResponse{
 				Result: &metav1.Status{
 					Message: err.Error(),
 				},
@@ -223,7 +222,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, parameters WhSvr
 
 			patchBytes, err := createPatch(pod, secretKey, secretFormat, parameters)
 			if err != nil {
-				return &v1beta1.AdmissionResponse{
+				return &arv1.AdmissionResponse{
 					Result: &metav1.Status{
 						Message: err.Error(),
 					},
@@ -231,17 +230,17 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, parameters WhSvr
 			}
 
 			glog.V(3).Infof("AdmissionResponse: patch=%v\n", string(patchBytes))
-			return &v1beta1.AdmissionResponse{
+			return &arv1.AdmissionResponse{
 				Allowed: true,
 				Patch:   patchBytes,
-				PatchType: func() *v1beta1.PatchType {
-					pt := v1beta1.PatchTypeJSONPatch
+				PatchType: func() *arv1.PatchType {
+					pt := arv1.PatchTypeJSONPatch
 					return &pt
 				}(),
 			}
 		}
 	}
-	return &v1beta1.AdmissionResponse{
+	return &arv1.AdmissionResponse{
 		Allowed: true,
 	}
 }
@@ -268,26 +267,28 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var admissionResponse *v1beta1.AdmissionResponse
-	ar := v1beta1.AdmissionReview{}
-	if _, _, err := deserializer.Decode(body, nil, &ar); err != nil {
+	var admissionResponse *arv1.AdmissionResponse
+	ar := arv1.AdmissionReview{}
+	if _, gvk, err := deserializer.Decode(body, nil, &ar); err != nil {
 		glog.Errorf("Can't decode body: %v", err)
-		admissionResponse = &v1beta1.AdmissionResponse{
+		admissionResponse = &arv1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: err.Error(),
 			},
 		}
 	} else {
+		ar.SetGroupVersionKind(*gvk)
 		if r.URL.Path == "/mutate" {
 			admissionResponse = whsvr.mutate(&ar, whsvr.Parameters)
 		}
 	}
 
-	admissionReview := v1beta1.AdmissionReview{}
+	admissionReview := arv1.AdmissionReview{}
 	if admissionResponse != nil {
 		admissionReview.Response = admissionResponse
 		if ar.Request != nil {
 			admissionReview.Response.UID = ar.Request.UID
+			admissionReview.SetGroupVersionKind(ar.GetObjectKind().GroupVersionKind())
 		}
 	}
 
